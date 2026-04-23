@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>今日幸运菜 · FOODTI</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    body { background: #fdf6f0; }
+
+    .fortune-header {
+      width:100%; text-align:center; margin-bottom:8px;
+    }
+
+    /* ── 起卦区 ── */
+    .cast-section {
+      width:100%; display:flex; flex-direction:column;
+      align-items:center; gap:16px; margin: 8px 0 24px;
+    }
+    .cast-hint {
+      font-size:13px; color:#aaa; text-align:center; line-height:1.8;
+    }
+    .cast-btn {
+      width:160px; height:160px; border-radius:50%;
+      background: linear-gradient(135deg, #fff8f0 0%, #ffe8d0 100%);
+      border: 3px solid #f5c842;
+      box-shadow: 0 4px 20px rgba(245,200,66,0.25), inset 0 2px 8px rgba(255,255,255,0.8);
+      cursor:pointer; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:6px;
+      transition: transform 0.15s, box-shadow 0.15s;
+      position:relative; overflow:hidden;
+    }
+    .cast-btn:hover { transform:scale(1.04); box-shadow:0 8px 28px rgba(245,200,66,0.35); }
+    .cast-btn:active { transform:scale(0.97); }
+    .cast-btn .cast-icon { font-size:40px; line-height:1; }
+    .cast-btn .cast-label {
+      font-size:13px; font-weight:900; color:#c8860a; letter-spacing:1px;
+    }
+    .cast-btn.shaking {
+      animation: shake 0.5s ease;
+    }
+    @keyframes shake {
+      0%,100%{transform:rotate(0deg) scale(1.02);}
+      20%{transform:rotate(-8deg) scale(1.05);}
+      40%{transform:rotate(8deg) scale(1.05);}
+      60%{transform:rotate(-5deg) scale(1.03);}
+      80%{transform:rotate(5deg) scale(1.03);}
+    }
+
+    /* ── 卦象展示 ── */
+    .hexagram-section {
+      width:100%; display:none; flex-direction:column;
+      align-items:center; gap:0;
+      animation: fadeSlideIn 0.5s ease;
+    }
+    .hexagram-section.visible { display:flex; }
+
+    .hexagram-name {
+      font-size:22px; font-weight:900; color:#1a1a1a;
+      margin-bottom:4px; text-align:center;
+    }
+    .hexagram-sub {
+      font-size:12px; color:#aaa; margin-bottom:20px; text-align:center;
+    }
+
+    /* 六爻卦线 */
+    .yao-lines {
+      display:flex; flex-direction:column-reverse; gap:8px;
+      margin-bottom:24px; align-items:center;
+    }
+    .yao-row {
+      display:flex; align-items:center; gap:10px;
+    }
+    .yao-num {
+      font-size:10px; color:#ccc; width:16px; text-align:right;
+    }
+    .yao-line {
+      display:flex; gap:6px; align-items:center;
+    }
+    /* 阳爻：整条线 */
+    .yao-yang {
+      width:80px; height:10px; background:#f5c842;
+      border-radius:5px;
+      box-shadow: 0 2px 6px rgba(245,200,66,0.4);
+    }
+    /* 阴爻：两段线 */
+    .yao-yin-l, .yao-yin-r {
+      width:34px; height:10px; background:#c8a0e8;
+      border-radius:5px;
+      box-shadow: 0 2px 6px rgba(200,160,232,0.4);
+    }
+    /* 变爻标记 */
+    .yao-change {
+      font-size:14px; color:#ff6b6b; margin-left:4px;
+    }
+    .yao-row.is-change .yao-yang,
+    .yao-row.is-change .yao-yin-l,
+    .yao-row.is-change .yao-yin-r {
+      opacity:0.5;
+    }
+
+    /* 卦象动画 */
+    .yao-row { opacity:0; transform:translateX(-12px); }
+    .yao-row.appear {
+      animation: yaoIn 0.35s ease forwards;
+    }
+    @keyframes yaoIn {
+      to { opacity:1; transform:translateX(0); }
+    }
+
+    /* ── 结果卡片 ── */
+    .fortune-card {
+      width:100%; border-radius:24px; padding:24px 20px 20px;
+      position:relative; overflow:hidden;
+      animation: fadeSlideIn 0.5s ease 0.8s both;
+    }
+    .fortune-card-bg {
+      position:absolute; inset:0; border-radius:24px;
+      opacity:0.07;
+    }
+    .fortune-card-border {
+      position:absolute; inset:0; border-radius:24px;
+      border:3px solid; box-shadow:5px 5px 0;
+      pointer-events:none;
+    }
+
+    .lucky-food-icon {
+      font-size:52px; text-align:center; display:block;
+      margin-bottom:8px; filter:drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+    }
+    .lucky-food-name {
+      font-size:26px; font-weight:900; text-align:center;
+      color:#1a1a1a; margin-bottom:6px;
+    }
+    .lucky-food-tag {
+      text-align:center; margin-bottom:16px;
+    }
+    .lucky-tag-pill {
+      display:inline-block; padding:3px 12px; border-radius:999px;
+      font-size:11px; font-weight:700; border:2px solid;
+      margin:0 3px;
+    }
+
+    /* 解读区块 */
+    .fortune-blocks {
+      display:flex; flex-direction:column; gap:12px; margin-top:16px;
+    }
+    .fortune-block {
+      background:rgba(255,255,255,0.7); border-radius:14px;
+      padding:14px 16px; border:1.5px solid rgba(255,255,255,0.9);
+      backdrop-filter:blur(4px);
+    }
+    .fortune-block-title {
+      font-size:11px; font-weight:900; color:#aaa;
+      letter-spacing:1px; margin-bottom:6px;
+      display:flex; align-items:center; gap:5px;
+    }
+    .fortune-block-dot {
+      width:7px; height:7px; border-radius:2px; display:inline-block;
+    }
+    .fortune-block-body {
+      font-size:14px; line-height:1.8; color:#333;
+    }
+
+    /* 今日宜/忌 */
+    .yi-ji-row {
+      display:flex; gap:10px; margin-top:12px;
+    }
+    .yi-box, .ji-box {
+      flex:1; border-radius:12px; padding:10px 12px; text-align:center;
+    }
+    .yi-box { background:rgba(100,220,160,0.15); border:1.5px solid rgba(100,220,160,0.4); }
+    .ji-box { background:rgba(255,120,120,0.1); border:1.5px solid rgba(255,120,120,0.3); }
+    .yi-ji-label { font-size:10px; font-weight:900; letter-spacing:2px; margin-bottom:4px; }
+    .yi-box .yi-ji-label { color:#3dba7e; }
+    .ji-box .yi-ji-label { color:#e05c5c; }
+    .yi-ji-content { font-size:13px; font-weight:700; color:#333; line-height:1.5; }
+
+    /* 底部签文 */
+    .fortune-verse {
+      margin-top:16px; padding:14px 16px; border-radius:14px;
+      text-align:center; font-size:15px; font-weight:700;
+      line-height:1.8; font-style:italic; color:#fff;
+      box-shadow:3px 3px 0 rgba(0,0,0,0.12);
+    }
+
+    /* 重新起卦 */
+    .recast-row {
+      display:flex; gap:12px; justify-content:center;
+      margin-top:24px; flex-wrap:wrap;
+    }
+
+    @keyframes fadeSlideIn {
+      from { opacity:0; transform:translateY(16px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="fortune-header">
+    <div class="pixel-font" style="font-size:13px;letter-spacing:3px;">FOODTI</div>
+    <p style="font-size:12px;color:#aaa;margin-top:4px;">今日幸运菜 · 六爻占卜</p>
+  </div>
+
+  <!-- 起卦区 -->
+  <div class="cast-section" id="cast-section">
+    <p class="cast-hint">心中默念今日想吃什么<br/>点击铜钱起卦</p>
+    <button class="cast-btn" id="cast-btn" onclick="startCast()">
+      <span class="cast-icon">🪙</span>
+      <span class="cast-label">起卦</span>
+    </button>
+    <p class="cast-hint" style="font-size:11px;margin-top:4px;">
+      今日卦象每人每天唯一<br/>同一天再测结果相同
+    </p>
+  </div>
+
+  <!-- 卦象 + 结果（起卦后显示） -->
+  <div class="hexagram-section" id="hexagram-section">
+    <div class="hexagram-name" id="hex-name"></div>
+    <div class="hexagram-sub" id="hex-sub"></div>
+    <div class="yao-lines" id="yao-lines"></div>
+
+    <div class="fortune-card" id="fortune-card">
+      <div class="fortune-card-bg" id="fc-bg"></div>
+      <div class="fortune-card-border" id="fc-border"></div>
+      <span class="lucky-food-icon" id="lucky-icon"></span>
+      <div class="lucky-food-name" id="lucky-name"></div>
+      <div class="lucky-food-tag" id="lucky-tag"></div>
+      <div class="fortune-blocks" id="fortune-blocks"></div>
+    </div>
+
+    <div class="recast-row">
+      <button class="btn btn-outline" onclick="resetCast()">重新起卦</button>
+      <a id="back-btn" href="result.html" class="btn btn-primary">返回结果</a>
+    </div>
+    <footer class="footer" style="margin-top:20px;">卦象仅供娱乐 · 吃好才是真道理</footer>
+  </div>
+</div>
+
+<script>
+// ── 幸运菜数据库（8卦 × 每卦2种菜 = 16条）──
+const LUCKY_FOODS = {
+  // 乾卦 ☰ 天 — 阳刚、大气
+  乾: {
+    name:"乾卦 · 天行健",
+    sub:"刚健中正，食补为先",
+    color:"#F5A623",
+    foods:[
+      {
+        icon:"🥩", name:"红烧肉", tags:["滋补","暖胃","大满足"],
+        reason:"乾卦主阳气充盈，今日宜食红烧肉。肥瘦相间，火候绵长，正如乾卦「天行健，君子以自强不息」——吃一口，元气满满，今日诸事皆顺。",
+        yi:"大口吃肉", ji:"节食减肥",
+        verse:"「肉香四溢乾坤定，今日吃饱万事兴」"
+      },
+      {
+        icon:"🍲", name:"羊肉汤锅", tags:["温补","驱寒","大气"],
+        reason:"乾为天，天气高远，羊肉汤锅热气腾腾，正应此卦。今日宜与亲近之人共享一锅，暖身暖心，运势如汤底般越煮越浓。",
+        yi:"呼朋唤友", ji:"独自将就",
+        verse:"「一锅热汤暖乾坤，今日缘分自天来」"
+      }
+    ]
+  },
+  // 坤卦 ☷ 地 — 包容、滋养
+  坤: {
+    name:"坤卦 · 厚德载物",
+    sub:"柔顺包容，以食养德",
+    color:"#A8D8A8",
+    foods:[
+      {
+        icon:"🥗", name:"时蔬沙拉", tags:["清爽","养生","轻盈"],
+        reason:"坤卦主大地滋养，今日宜食时令蔬菜。绿意盎然，清爽自然，正如坤卦「地势坤，君子以厚德载物」——吃得清淡，心境平和，今日贵人自来。",
+        yi:"清淡饮食", ji:"大鱼大肉",
+        verse:"「绿意盈盘坤德厚，今日清心福自来」"
+      },
+      {
+        icon:"🍚", name:"白米饭配家常菜", tags:["朴实","踏实","家的味道"],
+        reason:"坤为地，地道承载万物。一碗白米饭，几道家常菜，看似平淡，却是最踏实的幸福。今日不必追求新奇，回归本味，运势稳中有升。",
+        yi:"回家吃饭", ji:"外出冒险",
+        verse:"「家常一饭坤道厚，平淡之中见真章」"
+      }
+    ]
+  },
+  // 震卦 ☳ 雷 — 行动、突破
+  震: {
+    name:"震卦 · 雷动万物",
+    sub:"雷霆万钧，食以激发",
+    color:"#FF9F43",
+    foods:[
+      {
+        icon:"🌶️", name:"麻辣火锅", tags:["刺激","热烈","过瘾"],
+        reason:"震卦主雷动，今日宜食麻辣火锅。红汤翻滚，辣意冲天，正如震卦「洊雷，震；君子以恐惧修省」——辣得酣畅，思维清醒，今日行动力爆棚，适合做决定。",
+        yi:"大胆行动", ji:"犹豫不决",
+        verse:"「麻辣翻滚震天响，今日出手必成功」"
+      },
+      {
+        icon:"🍜", name:"重庆小面", tags:["劲道","麻辣","接地气"],
+        reason:"震卦雷声滚滚，重庆小面的麻辣劲道正应此象。一碗下肚，精神振奋，今日适合突破舒适区，尝试新事物，运势随辣意一同上扬。",
+        yi:"尝试新事", ji:"墨守成规",
+        verse:"「一碗小面震精神，今日突破在此刻」"
+      }
+    ]
+  },
+  // 巽卦 ☴ 风 — 灵动、变化
+  巽: {
+    name:"巽卦 · 随风而动",
+    sub:"柔风入怀，食以随缘",
+    color:"#B3E8FF",
+    foods:[
+      {
+        icon:"🍱", name:"日式便当", tags:["精致","多样","随心"],
+        reason:"巽卦主风，风无定形，随处可入。日式便当小巧精致，一盒之中包罗万象，正应巽卦「随风」之意——今日随缘而食，不必执着，反而处处有惊喜。",
+        yi:"随遇而安", ji:"强求执念",
+        verse:"「风入便当百味来，今日随缘皆是福」"
+      },
+      {
+        icon:"🥟", name:"各式点心", tags:["精巧","多变","有趣"],
+        reason:"巽为风，风行草偃，点心种类繁多，如风之变化无穷。今日宜尝试多种小食，广结善缘，运势如风般流动顺畅，贵人从四面八方而来。",
+        yi:"广泛尝试", ji:"固执一味",
+        verse:"「点心如风无定形，今日缘分随处生」"
+      }
+    ]
+  },
+  // 坎卦 ☵ 水 — 智慧、深邃
+  坎: {
+    name:"坎卦 · 水善利万物",
+    sub:"上善若水，食以润心",
+    color:"#7FC8FF",
+    foods:[
+      {
+        icon:"🍣", name:"刺身/生鱼片", tags:["鲜美","清透","高级"],
+        reason:"坎卦主水，水性至柔至清。刺身鲜嫩透亮，如水之纯净，正应坎卦「水善利万物而不争」——今日宜静心品味，不争不抢，智慧自然涌现，贵人暗中相助。",
+        yi:"静心思考", ji:"争强好胜",
+        verse:"「刺身如水映心清，今日智慧自涌现」"
+      },
+      {
+        icon:"🍜", name:"清汤面", tags:["清淡","滋润","养心"],
+        reason:"坎为水，水流不息。一碗清汤面，汤清味鲜，如坎卦之水，看似平淡，实则深邃。今日宜保持清醒头脑，不被表象迷惑，运势如清流般稳定前行。",
+        yi:"保持清醒", ji:"随波逐流",
+        verse:"「清汤一碗坎水深，今日静观自得明」"
+      }
+    ]
+  },
+  // 离卦 ☲ 火 — 热情、光明
+  离: {
+    name:"离卦 · 火明万象",
+    sub:"光明磊落，食以燃情",
+    color:"#FF6B6B",
+    foods:[
+      {
+        icon:"🍕", name:"披萨", tags:["热情","丰盛","分享"],
+        reason:"离卦主火，火光明亮，照耀四方。披萨圆满丰盛，热气腾腾，正应离卦「明两作，离；大人以继明照于四方」——今日宜与人分享，热情待人，运势如火焰般旺盛。",
+        yi:"热情分享", ji:"独自享用",
+        verse:"「披萨圆满离火旺，今日热情照四方」"
+      },
+      {
+        icon:"🍛", name:"咖喱饭", tags:["热烈","香浓","充满活力"],
+        reason:"离为火，火性炎上。咖喱金黄浓郁，香气四溢，如离卦之火光灿烂。今日运势热烈，适合展示自我，表达想法，你的光芒今天特别耀眼。",
+        yi:"展示自我", ji:"低调隐忍",
+        verse:"「咖喱金黄离火明，今日光芒无可挡」"
+      }
+    ]
+  },
+  // 艮卦 ☶ 山 — 稳重、积累
+  艮: {
+    name:"艮卦 · 山止而厚",
+    sub:"厚积薄发，食以蓄势",
+    color:"#C8A06E",
+    foods:[
+      {
+        icon:"🥘", name:"砂锅炖菜", tags:["慢炖","醇厚","踏实"],
+        reason:"艮卦主山，山岳稳重，厚积薄发。砂锅慢炖，时间越长越醇厚，正应艮卦「兼山，艮；君子以思不出其位」——今日宜沉住气，慢慢来，积累的力量终将爆发。",
+        yi:"耐心等待", ji:"急于求成",
+        verse:"「砂锅慢炖艮山厚，今日积累明日发」"
+      },
+      {
+        icon:"🍢", name:"关东煮", tags:["温暖","耐心","细水长流"],
+        reason:"艮为山，山势巍峨，关东煮在热汤中慢慢入味，如艮卦之厚积。今日不必着急，一步一个脚印，运势如关东煮般越泡越入味，越来越好。",
+        yi:"稳扎稳打", ji:"冒进冒险",
+        verse:"「关东煮里艮道深，今日稳步自有成」"
+      }
+    ]
+  },
+  // 兑卦 ☱ 泽 — 喜悦、交流
+  兑: {
+    name:"兑卦 · 泽润万物",
+    sub:"喜悦交流，食以悦心",
+    color:"#FD79A8",
+    foods:[
+      {
+        icon:"🧁", name:"甜点/蛋糕", tags:["甜蜜","喜悦","犒劳自己"],
+        reason:"兑卦主泽，泽水喜悦，润泽万物。甜点香甜可口，令人心情愉悦，正应兑卦「丽泽，兑；君子以朋友讲习」——今日宜犒劳自己，与朋友分享甜蜜，喜事将至。",
+        yi:"犒劳自己", ji:"过度节制",
+        verse:"「甜点入口兑泽润，今日喜事自然来」"
+      },
+      {
+        icon:"🍦", name:"冰淇淋", tags:["清甜","轻松","小确幸"],
+        reason:"兑为泽，泽水清澈，令人心旷神怡。冰淇淋清甜冰凉，如兑卦之喜悦轻盈。今日适合放松心情，享受小确幸，运势轻盈愉快，意外之喜悄然而至。",
+        yi:"享受当下", ji:"过度焦虑",
+        verse:"「冰淇淋甜兑水清，今日小喜藏其中」"
+      }
+    ]
+  }
+};
+
+// 八卦名称列表（用于映射）
+const BAGUA = ["乾","坤","震","巽","坎","离","艮","兑"];
+
+// ── 伪随机种子（日期 + 人格码）──
+function seedRandom(seed) {
+  let s = seed;
+  return function() {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    return (s >>> 0) / 0xffffffff;
+  };
+}
+
+function getDailySeed(code) {
+  const d = new Date();
+  const dateStr = `${d.getFullYear()}${d.getMonth()}${d.getDate()}`;
+  let hash = 0;
+  const str = dateStr + (code || "XGVP");
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+// ── 生成六爻 ──
+// 每爻：6=老阴(变)，7=少阳，8=少阴，9=老阳(变)
+function generateYao(rand) {
+  // 模拟三枚铜钱：正面=3，反面=2，三枚之和
+  const coins = () => Math.floor(rand() * 2) + 2 + Math.floor(rand() * 2) + 2 + Math.floor(rand() * 2) + 2;
+  return Array.from({length:6}, () => coins()); // 6~9
+}
+
+function yaoIsYang(v) { return v === 7 || v === 9; }
+function yaoIsChange(v) { return v === 6 || v === 9; }
+
+// 六爻 → 上下卦（各3爻）→ 卦名
+function yaoToTrigram(yao3) {
+  // 阳=1，阴=0，从下到上
+  const bits = yao3.map(v => yaoIsYang(v) ? 1 : 0);
+  const idx = bits[0] + bits[1]*2 + bits[2]*4;
+  // 对应：000坤,001震,010坎,011兑,100艮,101离,110巽,111乾
+  const map = ["坤","震","坎","兑","艮","离","巽","乾"];
+  return map[idx];
+}
+
+// ── 页面状态 ──
+const params = new URLSearchParams(location.search);
+const code = params.get("code") || "XGVP";
+const backUrl = params.get("back") || "result.html";
+
+// 设置返回链接
+document.getElementById("back-btn").href = backUrl + (location.search.replace("?","&").replace(/&?code=[^&]*/,"").replace(/^&/,"") ? "?" + location.search.replace("?","&").replace(/&?code=[^&]*/,"").replace(/^&/,"") : "");
+
+// 实际上直接用原始URL返回
+const fullBack = document.referrer || "result.html";
+document.getElementById("back-btn").href = fullBack || "result.html";
+
+let castDone = false;
+
+function startCast() {
+  if (castDone) return;
+
+  const btn = document.getElementById("cast-btn");
+  btn.classList.add("shaking");
+  btn.style.pointerEvents = "none";
+
+  // 摇卦动画
+  setTimeout(() => {
+    btn.classList.remove("shaking");
+    showResult();
+  }, 600);
+}
+
+function showResult() {
+  castDone = true;
+
+  // 生成卦象
+  const seed = getDailySeed(code);
+  const rand = seedRandom(seed);
+  const yaos = generateYao(rand);
+
+  // 上卦（爻4-6）下卦（爻1-3）
+  const lowerTrigram = yaoToTrigram(yaos.slice(0,3));
+  const upperTrigram = yaoToTrigram(yaos.slice(3,6));
+
+  // 主卦用下卦决定菜系（更直接）
+  const mainGua = lowerTrigram;
+  const guaData = LUCKY_FOODS[mainGua];
+
+  // 用随机数选两道菜中的一道
+  const foodIdx = Math.floor(rand() * guaData.foods.length);
+  const food = guaData.foods[foodIdx];
+
+  // 渲染卦名
+  document.getElementById("hex-name").textContent = guaData.name;
+  document.getElementById("hex-sub").textContent = `本卦：${lowerTrigram}卦  互卦：${upperTrigram}卦`;
+
+  // 渲染六爻线（带动画）
+  const yaoContainer = document.getElementById("yao-lines");
+  yaoContainer.innerHTML = "";
+  yaos.forEach((v, i) => {
+    const row = document.createElement("div");
+    row.className = "yao-row" + (yaoIsChange(v) ? " is-change" : "");
+
+    const numEl = document.createElement("div");
+    numEl.className = "yao-num";
+    numEl.textContent = i + 1;
+
+    const lineEl = document.createElement("div");
+    lineEl.className = "yao-line";
+
+    if (yaoIsYang(v)) {
+      const bar = document.createElement("div");
+      bar.className = "yao-yang";
+      lineEl.appendChild(bar);
+    } else {
+      const l = document.createElement("div"); l.className = "yao-yin-l";
+      const r = document.createElement("div"); r.className = "yao-yin-r";
+      lineEl.appendChild(l); lineEl.appendChild(r);
+    }
+
+    if (yaoIsChange(v)) {
+      const ch = document.createElement("span");
+      ch.className = "yao-change"; ch.textContent = "○";
+      lineEl.appendChild(ch);
+    }
+
+    row.appendChild(numEl);
+    row.appendChild(lineEl);
+    yaoContainer.appendChild(row);
+
+    // 逐爻出现动画
+    setTimeout(() => row.classList.add("appear"), i * 120);
+  });
+
+  // 渲染结果卡片
+  const card = document.getElementById("fortune-card");
+  const bg = document.getElementById("fc-bg");
+  const border = document.getElementById("fc-border");
+  bg.style.background = guaData.color;
+  border.style.borderColor = guaData.color;
+  border.style.boxShadow = `5px 5px 0 ${guaData.color}`;
+
+  document.getElementById("lucky-icon").textContent = food.icon;
+  document.getElementById("lucky-name").textContent = food.name;
+
+  const tagWrap = document.getElementById("lucky-tag");
+  tagWrap.innerHTML = food.tags.map(t =>
+    `<span class="lucky-tag-pill" style="border-color:${guaData.color};color:${guaData.color}">${t}</span>`
+  ).join("");
+
+  // 解读区块
+  const blocks = document.getElementById("fortune-blocks");
+  blocks.innerHTML = `
+    <div class="fortune-block">
+      <div class="fortune-block-title">
+        <span class="fortune-block-dot" style="background:${guaData.color}"></span>
+        🔮 卦象解读
+      </div>
+      <div class="fortune-block-body">${food.reason}</div>
+    </div>
+    <div class="fortune-block">
+      <div class="fortune-block-title">
+        <span class="fortune-block-dot" style="background:${guaData.color}"></span>
+        ☯️ 今日宜忌
+      </div>
+      <div class="yi-ji-row">
+        <div class="yi-box">
+          <div class="yi-ji-label">今日宜</div>
+          <div class="yi-ji-content">${food.yi}</div>
+        </div>
+        <div class="ji-box">
+          <div class="yi-ji-label">今日忌</div>
+          <div class="yi-ji-content">${food.ji}</div>
+        </div>
+      </div>
+    </div>
+    <div class="fortune-verse" style="background:${guaData.color}">${food.verse}</div>
+  `;
+
+  // 显示结果区
+  document.getElementById("cast-section").style.display = "none";
+  const hexSection = document.getElementById("hexagram-section");
+  hexSection.classList.add("visible");
+}
+
+function resetCast() {
+  castDone = false;
+  document.getElementById("cast-section").style.display = "flex";
+  document.getElementById("hexagram-section").classList.remove("visible");
+  document.getElementById("yao-lines").innerHTML = "";
+  const btn = document.getElementById("cast-btn");
+  btn.style.pointerEvents = "auto";
+}
+</script>
+</body>
+</html>

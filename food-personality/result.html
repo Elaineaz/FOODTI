@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>你的餐饮人格 · FOODTI</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    .result-header{width:100%;text-align:center;margin-bottom:16px;}
+    .result-header .pixel-font{font-size:14px;letter-spacing:3px;}
+
+    /* 主卡片 */
+    .result-card{
+      width:100%;border-radius:24px;padding:28px 24px 24px;
+      text-align:center;animation:fadeSlideIn 0.4s ease;
+      position:relative;overflow:hidden;
+    }
+    .result-card-bg{
+      position:absolute;inset:0;opacity:0.08;
+      background:var(--c,#FF6B6B);border-radius:24px;
+    }
+    .result-card-border{
+      position:absolute;inset:0;border-radius:24px;
+      border:3px solid var(--c,#FF6B6B);
+      box-shadow:6px 6px 0 var(--c,#FF6B6B);
+      pointer-events:none;
+    }
+
+    .mascot-wrap{display:flex;justify-content:center;margin:12px 0 16px;}
+    .mascot-wrap svg{filter:drop-shadow(0 4px 12px rgba(0,0,0,0.12));}
+
+    .result-code{
+      font-family:'Press Start 2P','Courier New',monospace;
+      font-size:11px;letter-spacing:4px;margin-bottom:6px;
+    }
+    .result-name{font-size:28px;font-weight:900;margin-bottom:4px;color:#1a1a1a;}
+    .result-emoji{font-size:32px;display:block;margin-bottom:8px;}
+
+    .dim-tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0 16px;}
+    .dim-tag{
+      padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;
+      border:2px solid var(--c,#FF6B6B);color:var(--c,#FF6B6B);
+    }
+
+    /* 深度解读区块 */
+    .detail-section{
+      width:100%;margin-top:20px;
+      display:flex;flex-direction:column;gap:14px;
+    }
+    .detail-block{
+      background:#fff;border-radius:16px;padding:16px 18px;
+      border:2px solid #f0f0f0;text-align:left;
+      box-shadow:3px 3px 0 #f0f0f0;
+    }
+    .detail-block-title{
+      font-size:11px;font-weight:900;color:#aaa;
+      letter-spacing:1px;margin-bottom:8px;
+      display:flex;align-items:center;gap:6px;
+    }
+    .detail-block-title .dot{
+      width:8px;height:8px;border-radius:2px;
+      background:var(--c,#FF6B6B);display:inline-block;flex-shrink:0;
+    }
+    .detail-block-body{font-size:14px;line-height:1.8;color:#333;}
+
+    .vibe-block{
+      background:var(--c,#FF6B6B);border-radius:16px;padding:16px 18px;
+      text-align:center;color:#fff;font-size:15px;font-weight:700;
+      line-height:1.6;font-style:italic;
+      box-shadow:3px 3px 0 rgba(0,0,0,0.15);
+    }
+
+    .food-tag-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+    .food-tag{
+      padding:4px 12px;border-radius:8px;font-size:12px;font-weight:700;
+      background:var(--c,#FF6B6B);color:#fff;opacity:0.85;
+    }
+
+    .retry-row{display:flex;gap:12px;justify-content:center;margin-top:28px;flex-wrap:wrap;}
+
+    /* 维度百分比 */
+    .dim-bars{
+      width:100%;margin-top:18px;
+      display:flex;flex-direction:column;gap:11px;
+      text-align:left;
+    }
+    .dim-bar-row{display:flex;align-items:center;gap:8px;}
+    .dim-bar-label{
+      font-size:12px;font-weight:900;width:52px;flex-shrink:0;
+      color:#444;line-height:1.2;
+    }
+    .dim-bar-label span{
+      display:block;font-size:10px;font-weight:700;color:#aaa;margin-top:1px;
+    }
+    .dim-bar-track{
+      flex:1;height:9px;background:rgba(0,0,0,0.06);border-radius:999px;overflow:hidden;
+    }
+    .dim-bar-fill{
+      height:100%;border-radius:999px;
+      transition:width 0.9s cubic-bezier(.4,0,.2,1);
+      width:0%;
+    }
+    .dim-bar-vs{
+      font-size:10px;color:#bbb;width:54px;flex-shrink:0;text-align:right;
+      white-space:nowrap;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="result-header">
+    <div class="pixel-font">FOODTI</div>
+    <p style="font-size:12px;color:#aaa;margin-top:4px;">你的餐饮人格是</p>
+  </div>
+
+  <!-- 主卡片 -->
+  <div class="result-card" id="result-card">
+    <div class="result-card-bg"></div>
+    <div class="result-card-border"></div>
+    <div class="result-code pixel-font" id="result-code"></div>
+    <div class="mascot-wrap" id="result-mascot"></div>
+    <span class="result-emoji" id="result-emoji"></span>
+    <div class="result-name" id="result-name"></div>
+    <div class="dim-tags" id="dim-tags"></div>
+    <div style="font-size:14px;color:#555;line-height:1.7;" id="result-desc"></div>
+    <div class="dim-bars" id="dim-bars"></div>
+  </div>
+
+  <!-- 深度解读 -->
+  <div class="detail-section" id="detail-section"></div>
+
+  <!-- 算卦入口 -->
+  <div id="fortune-entry" style="width:100%;margin-top:20px;">
+    <button onclick="goFortune()" style="
+      width:100%;padding:18px 20px;border-radius:20px;border:none;cursor:pointer;
+      background:linear-gradient(135deg,#fff8e8 0%,#ffecc0 100%);
+      border:2px solid #f5c842;
+      box-shadow:4px 4px 0 #f5c842;
+      display:flex;align-items:center;justify-content:space-between;
+      transition:transform 0.15s,box-shadow 0.15s;
+    "
+    onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='4px 6px 0 #f5c842'"
+    onmouseout="this.style.transform='';this.style.boxShadow='4px 4px 0 #f5c842'"
+    onmousedown="this.style.transform='translateY(2px)';this.style.boxShadow='2px 2px 0 #f5c842'"
+    onmouseup="this.style.transform='';this.style.boxShadow='4px 4px 0 #f5c842'"
+    >
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:32px;line-height:1">🪙</span>
+        <div style="text-align:left;">
+          <div style="font-size:15px;font-weight:900;color:#c8860a;">算算今日幸运菜</div>
+          <div style="font-size:11px;color:#aaa;margin-top:2px;">六爻占卜 · 今日专属菜系</div>
+        </div>
+      </div>
+      <span style="font-size:18px;color:#f5c842;">→</span>
+    </button>
+  </div>
+
+  <div class="retry-row">
+    <a href="quiz.html" class="btn btn-primary">再测一次</a>
+    <a href="index.html" class="btn btn-outline">回首页</a>
+  </div>
+
+  <footer class="footer">共 16 种餐饮人格 · 你是哪一种？</footer>
+</div>
+
+<script>
+// ── 食物图标（马卡龙色系）──
+const FOODS = [
+  { bg:"#FFD6CC", svg:`<circle cx="50" cy="54" r="32" fill="#fff5f3"/><path d="M18 54 Q50 20 82 54 Q82 80 50 82 Q18 80 18 54Z" fill="white"/><path d="M22 56 Q50 26 78 56" fill="none" stroke="#f9c4b8" stroke-width="2"/><ellipse cx="50" cy="46" rx="22" ry="18" fill="#f9c4b8"/><ellipse cx="50" cy="44" rx="14" ry="10" fill="#ffb3a0"/><circle cx="43" cy="42" r="2.5" fill="#e8856e"/><circle cx="57" cy="42" r="2.5" fill="#e8856e"/><ellipse cx="50" cy="48" rx="5" ry="3" fill="#e8856e"/>` },
+  { bg:"#FFF3CC", svg:`<rect x="22" y="52" width="56" height="34" rx="10" fill="#ffe9a0"/><rect x="26" y="56" width="48" height="26" rx="8" fill="#fff8e1"/><path d="M30 62 Q38 56 46 62 Q54 68 62 62 Q70 56 74 62" fill="none" stroke="#f5c842" stroke-width="3" stroke-linecap="round"/><path d="M30 70 Q38 64 46 70 Q54 76 62 70 Q70 64 74 70" fill="none" stroke="#f5c842" stroke-width="3" stroke-linecap="round"/><rect x="36" y="30" width="6" height="26" rx="3" fill="#e8a87c"/><rect x="58" y="30" width="6" height="26" rx="3" fill="#e8a87c"/><ellipse cx="39" cy="30" rx="5" ry="4" fill="#d4845a"/><ellipse cx="61" cy="30" rx="5" ry="4" fill="#d4845a"/>` },
+  { bg:"#FFE0D6", svg:`<path d="M50 18 L82 74 L18 74 Z" fill="#f9c784"/><path d="M50 22 L78 70 L22 70 Z" fill="#f0a050"/><circle cx="42" cy="55" r="6" fill="#e05c5c"/><circle cx="58" cy="52" r="5" fill="#e05c5c"/><circle cx="50" cy="62" r="4" fill="#e05c5c"/><circle cx="38" cy="64" r="3.5" fill="#e05c5c"/><circle cx="62" cy="62" r="3.5" fill="#e05c5c"/><path d="M22 70 L78 70" stroke="#e8a84a" stroke-width="3" stroke-linecap="round"/>` },
+  { bg:"#EDE0FF", svg:`<path d="M34 58 L38 86 L62 86 L66 58 Z" fill="#d4b8f0"/><line x1="40" y1="58" x2="38" y2="86" stroke="#c4a0e8" stroke-width="1"/><line x1="50" y1="58" x2="50" y2="86" stroke="#c4a0e8" stroke-width="1"/><line x1="60" y1="58" x2="62" y2="86" stroke="#c4a0e8" stroke-width="1"/><path d="M32 50 Q38 38 50 36 Q62 38 68 50 Q62 58 50 58 Q38 58 32 50Z" fill="#ffb3d9"/><circle cx="50" cy="36" r="4" fill="#ff8fc8"/><circle cx="50" cy="30" r="3" fill="#ff6eb5"/><circle cx="44" cy="40" r="3" fill="#ffcce8"/><circle cx="56" cy="40" r="3" fill="#ffcce8"/>` },
+  { bg:"#D6F5E8", svg:`<rect x="28" y="38" width="44" height="30" rx="8" fill="#2d2d2d"/><rect x="30" y="40" width="40" height="26" rx="7" fill="#f5f5f0"/><ellipse cx="50" cy="53" rx="16" ry="11" fill="#f9c784"/><ellipse cx="50" cy="53" rx="10" ry="7" fill="#ff8080"/><ellipse cx="50" cy="53" rx="5" ry="3.5" fill="#ffb3b3"/><rect x="28" y="62" width="44" height="8" rx="4" fill="#1a1a1a"/>` },
+  { bg:"#FFF0CC", svg:`<path d="M20 65 Q30 30 50 28 Q70 30 80 65 Q65 75 50 72 Q35 75 20 65Z" fill="#f5c842"/><path d="M25 63 Q35 35 50 33 Q65 35 75 63" fill="none" stroke="#e8a820" stroke-width="2.5" stroke-linecap="round"/><path d="M30 60 Q40 38 50 36 Q60 38 70 60" fill="none" stroke="#e8a820" stroke-width="2" stroke-linecap="round"/><ellipse cx="50" cy="66" rx="28" ry="8" fill="#e8a820"/>` },
+  { bg:"#FFD6E8", svg:`<path d="M42 56 L38 88 L62 88 L58 56 Z" fill="#f9c784"/><line x1="44" y1="56" x2="40" y2="88" stroke="#e8a84a" stroke-width="1"/><line x1="50" y1="56" x2="50" y2="88" stroke="#e8a84a" stroke-width="1"/><line x1="56" y1="56" x2="60" y2="88" stroke="#e8a84a" stroke-width="1"/><circle cx="50" cy="44" r="20" fill="#ffb3d0"/><path d="M36 50 Q42 36 50 34 Q58 36 64 50" fill="#ff8fb8"/><circle cx="44" cy="40" r="3" fill="#ff6eb5" opacity="0.6"/><circle cx="56" cy="38" r="2.5" fill="#ff6eb5" opacity="0.6"/><circle cx="50" cy="28" r="4" fill="#ff4da6"/>` },
+  { bg:"#FFE8CC", svg:`<circle cx="50" cy="58" r="22" fill="#f5a623"/><circle cx="50" cy="58" r="18" fill="#f9c784"/><circle cx="44" cy="52" r="4" fill="#e8850a" opacity="0.5"/><circle cx="57" cy="54" r="3" fill="#e8850a" opacity="0.5"/><circle cx="48" cy="64" r="3.5" fill="#e8850a" opacity="0.5"/><circle cx="50" cy="36" r="4" fill="#f5a623"/><circle cx="38" cy="42" r="4" fill="#f5a623"/><circle cx="62" cy="42" r="4" fill="#f5a623"/><rect x="48" y="22" width="4" height="16" rx="2" fill="#c8a06e"/>` },
+  { bg:"#D8F0D8", svg:`<rect x="18" y="44" width="64" height="42" rx="10" fill="#a8d8a8"/><rect x="20" y="46" width="60" height="38" rx="9" fill="#f5f5f0"/><rect x="20" y="46" width="60" height="18" rx="9" fill="#c8e8c8"/><line x1="50" y1="46" x2="50" y2="84" stroke="#a8d8a8" stroke-width="2"/><circle cx="36" cy="55" r="7" fill="#ff8080"/><circle cx="64" cy="55" r="7" fill="#f9c784"/><ellipse cx="36" cy="73" rx="12" ry="7" fill="#f9c784"/><ellipse cx="64" cy="73" rx="12" ry="7" fill="#a8d8a8"/><rect x="24" y="36" width="52" height="10" rx="5" fill="#8cc88c"/>` },
+  { bg:"#F0E8FF", svg:`<path d="M20 62 Q50 38 80 62 Q80 80 50 80 Q20 80 20 62Z" fill="white"/><path d="M20 62 Q50 38 80 62" fill="none" stroke="#d4b0f0" stroke-width="2.5"/><path d="M26 60 Q32 50 38 56" fill="none" stroke="#d4b0f0" stroke-width="2" stroke-linecap="round"/><path d="M38 56 Q44 48 50 54" fill="none" stroke="#d4b0f0" stroke-width="2" stroke-linecap="round"/><path d="M50 54 Q56 48 62 56" fill="none" stroke="#d4b0f0" stroke-width="2" stroke-linecap="round"/><path d="M62 56 Q68 50 74 60" fill="none" stroke="#d4b0f0" stroke-width="2" stroke-linecap="round"/>` },
+  { bg:"#FFE0F0", svg:`<circle cx="50" cy="54" r="28" fill="#ffb3d0"/><circle cx="50" cy="54" r="12" fill="#fdf6f0"/><circle cx="36" cy="36" r="3" fill="#ff4da6" opacity="0.7"/><circle cx="50" cy="30" r="3" fill="#a8d8ff" opacity="0.8"/><circle cx="64" cy="36" r="3" fill="#f9c784" opacity="0.8"/><circle cx="70" cy="48" r="3" fill="#ff4da6" opacity="0.7"/><circle cx="30" cy="48" r="3" fill="#a8d8ff" opacity="0.8"/>` },
+  { bg:"#D8F5E0", svg:`<ellipse cx="50" cy="68" rx="30" ry="14" fill="#c8e8c8"/><ellipse cx="50" cy="66" rx="28" ry="12" fill="#f0f8f0"/><circle cx="38" cy="58" r="10" fill="#90d890"/><circle cx="52" cy="54" r="12" fill="#70c870"/><circle cx="64" cy="58" r="9" fill="#90d890"/><circle cx="44" cy="64" r="8" fill="#a8e0a8"/><circle cx="58" cy="62" r="8" fill="#a8e0a8"/><circle cx="36" cy="62" r="6" fill="#ff8080" opacity="0.8"/><circle cx="62" cy="56" r="5" fill="#ff8080" opacity="0.8"/>` },
+  { bg:"#FFE8D0", svg:`<rect x="28" y="50" width="44" height="32" rx="8" fill="#f9c784"/><rect x="30" y="52" width="40" height="28" rx="7" fill="#fff8e8"/><rect x="36" y="28" width="8" height="26" rx="4" fill="#e8a87c"/><rect x="56" y="28" width="8" height="26" rx="4" fill="#e8a87c"/><circle cx="40" cy="66" r="8" fill="#f5a623" opacity="0.8"/><circle cx="60" cy="66" r="8" fill="#e8d0a8"/><rect x="44" y="58" width="12" height="16" rx="4" fill="#ffb3a0"/>` },
+  { bg:"#FFF0CC", svg:`<rect x="22" y="30" width="56" height="56" rx="10" fill="#f5c842"/><rect x="24" y="32" width="52" height="52" rx="9" fill="#f9d878"/><line x1="24" y1="46" x2="76" y2="46" stroke="#e8a820" stroke-width="2"/><line x1="24" y1="58" x2="76" y2="58" stroke="#e8a820" stroke-width="2"/><line x1="24" y1="70" x2="76" y2="70" stroke="#e8a820" stroke-width="2"/><line x1="38" y1="32" x2="38" y2="84" stroke="#e8a820" stroke-width="2"/><line x1="50" y1="32" x2="50" y2="84" stroke="#e8a820" stroke-width="2"/><line x1="62" y1="32" x2="62" y2="84" stroke="#e8a820" stroke-width="2"/><circle cx="50" cy="26" r="5" fill="#ff8080"/>` },
+  { bg:"#FFFACC", svg:`<rect x="30" y="44" width="40" height="42" rx="8" fill="#fff8c0"/><rect x="32" y="46" width="36" height="38" rx="7" fill="#fffde8"/><path d="M32 56 Q50 50 68 56" fill="#fff0a0" stroke="#f5e020" stroke-width="1"/><circle cx="50" cy="52" r="10" fill="#f5e020" opacity="0.6"/><circle cx="50" cy="52" r="6" fill="#f9f060"/><rect x="64" y="52" width="14" height="6" rx="3" fill="#f9c784"/>` },
+  { bg:"#F0E8FF", svg:`<rect x="46" y="30" width="6" height="52" rx="3" fill="#c8a06e"/><circle cx="49" cy="34" r="14" fill="#ffb3d0"/><circle cx="49" cy="34" r="10" fill="#ffd6e8"/><circle cx="49" cy="54" r="14" fill="#f5f5f0"/><circle cx="49" cy="54" r="10" fill="white"/><circle cx="49" cy="74" r="14" fill="#90d890"/><circle cx="49" cy="74" r="10" fill="#b8e8b8"/>` },
+];
+
+// 人格码 → 食物索引映射
+const CODE_TO_FOOD = {
+  XGVP:0, XGVW:1, XGRP:2, XGRW:3,
+  XSVP:4, XSVW:5, XSRP:6, XSRW:7,
+  CGVP:8, CGVW:9, CGRP:10, CGRW:11,
+  CSVP:12, CSVW:13, CSRP:14, CSRW:15,
+};
+
+function getFoodHTML(code, size) {
+  size = size || 110;
+  const idx = CODE_TO_FOOD[code] ?? 0;
+  const f = FOODS[idx];
+  return `<div style="background:${f.bg};border-radius:50%;width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 24px rgba(0,0,0,0.10)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="${size*0.78}" height="${size*0.78}">${f.svg}</svg></div>`;
+}
+
+// ── 人格数据 ──
+const PERSONALITIES={
+  XGVP:{code:"XGVP",name:"城市觅食官",emoji:"🗺️",color:"#FF6B6B",tag:"探索·社交·感性·计划",desc:"新店雷达永远在线，朋友圈的美食情报站。",detail:{portrait:"你是那种会提前一周就开始规划周末吃什么的人。小红书、大众点评、抖音——只要有新店开业，你的雷达就会第一时间响起。你享受和朋友一起探店的过程，那种「我们是第一批来的」的成就感让你特别满足。",strength:"你的美食地图永远是最新的，朋友们出门吃饭第一个想到的就是你。你有规划能力，不会让大家饿着肚子在街上乱转，总能提前订好位、安排好行程。",weakness:"有时候太执着于「打卡新店」，反而忽略了身边那些低调但真正好吃的老店。偶尔也会因为攻略做得太细，少了一些随机发现惊喜的乐趣。",food_match:"网红餐厅、创意料理、限定菜单、节气特供",vibe:"「这家刚开业，我已经订好位了，走！」"}},
+  XGVW:{code:"XGVW",name:"随缘美食家",emoji:"🌀",color:"#FF9F43",tag:"探索·社交·感性·随性",desc:"跟着感觉走，误打误撞总能找到宝藏小店。",detail:{portrait:"你是那种「走，出去吃，不知道去哪」然后最后总能找到好地方的人。你喜欢和朋友漫无目的地逛，被一家店的香气或装修吸引，就推门进去。这种随机性让你觉得每顿饭都是一场小冒险。",strength:"你的灵活性极强，不会因为「没有计划」而焦虑，反而总能在意想不到的地方发现惊喜。你的饭局气氛永远是最好的，因为你享受当下，不纠结。",weakness:"有时候会因为没有计划而浪费时间，在街上转了一圈最后随便找家凑合。节假日高峰期没有预约，可能会吃到闭门羹。",food_match:"街边小馆、隐藏宝藏店、当日特色菜",vibe:"「不知道去哪，走着走着就找到了！」"}},
+  XGRP:{code:"XGRP",name:"饭局指挥家",emoji:"🎯",color:"#EE5A24",tag:"探索·社交·理性·计划",desc:"订位点菜全包圆，朋友们跟着吃就对了。",detail:{portrait:"你是饭局里最靠谱的那个人。提前做功课、比较口碑、预约订位、研究菜单——这些事你做起来不觉得麻烦，反而乐在其中。你喜欢带着朋友去探索新餐厅，但每一步都有充分准备。",strength:"效率极高，从来不会让大家在「吃什么」上浪费时间。你的推荐成功率很高，因为你在感性探索的同时保持了理性判断，不会被颜值骗走。",weakness:"有时候计划性太强，朋友们可能会觉得「跟你吃饭像在执行任务」。偶尔也会因为太想找到「最好的」而错过了「够好的」。",food_match:"口碑新店、主厨推荐、季节限定菜",vibe:"「我已经研究好了，这家的这道菜必须点。」"}},
+  XGRW:{code:"XGRW",name:"街头寻味人",emoji:"👣",color:"#F79F1F",tag:"探索·社交·理性·随性",desc:"越不起眼的巷子越想钻，地道才是真浪漫。",detail:{portrait:"你对「网红」两个字天然免疫，反而对那些藏在小巷里、门面破旧但香气扑鼻的小店充满好奇。你用鼻子和直觉找饭，不需要攻略，凭经验就能判断一家店值不值得进。",strength:"你发现的好店往往是别人没去过的，朋友们跟你吃饭总有新鲜感。你对食物本身有很强的判断力，不会被包装和营销迷惑。",weakness:"有时候太执着于「反网红」，可能错过一些真正好吃但恰好也很火的餐厅。带不熟悉的朋友去「苍蝇馆子」，对方可能会有点不适应。",food_match:"苍蝇馆子、老字号、地方特色小吃",vibe:"「就这家，看着就正宗，进！」"}},
+  XSVP:{code:"XSVP",name:"独行探店客",emoji:"🎨",color:"#A29BFE",tag:"探索·独享·感性·计划",desc:"一个人拿着相机，把每家新店当成展览逛。",detail:{portrait:"你喜欢一个人去探店，不需要迁就别人的口味和时间。你会提前做好功课，选好想去的店，然后一个人安静地坐下来，慢慢感受这家店的氛围、摆盘、光线和味道。",strength:"你对美食体验的感知力极强，能注意到别人忽略的细节——餐具的质感、背景音乐的选择、服务员的态度。你的探店记录往往是最有深度的。",weakness:"一个人吃饭点不了太多菜，有时候会遗憾没能尝到更多。偶尔也会因为太在意「体验感」而对食物本身的要求反而降低了。",food_match:"精致小馆、有设计感的咖啡厅、omakase",vibe:"「这家装修太美了，我要一个人去好好感受一下。」"}},
+  XSVW:{code:"XSVW",name:"独行冒险家",emoji:"🎲",color:"#6C5CE7",tag:"探索·独享·感性·随性",desc:"没吃过的就点，踩雷了也觉得是一种收获。",detail:{portrait:"你是最纯粹的美食冒险者。一个人，没有计划，走到哪吃到哪，看到没吃过的就点，踩雷了也不沮丧——「至少知道这个不好吃了」。你把每次吃饭都当成一次小实验。",strength:"你的美食经历是最丰富的，踩过的雷和发现的宝都比别人多。你不会因为「可能不好吃」而退缩，这种勇气让你总能有意外收获。",weakness:"踩雷率确实比较高，有时候一个人吃到难吃的东西会有点沮丧。因为不做计划，偶尔会在不该踩雷的时候踩雷（比如重要场合）。",food_match:"新奇食材、融合料理、限定实验菜单",vibe:"「没吃过，点它！踩雷了也是一种体验。」"}},
+  XSRP:{code:"XSRP",name:"美食观察员",emoji:"🔍",color:"#00B894",tag:"探索·独享·理性·计划",desc:"吃之前做足功课，吃完还能说出门道来。",detail:{portrait:"你对吃这件事有一种近乎学术的认真。去一家新餐厅之前，你会研究主厨背景、食材来源、菜单逻辑；吃完之后，你能清晰地说出哪道菜的火候差了一点、哪个搭配出乎意料地好。",strength:"你是朋友圈里最专业的美食评论员，推荐的东西几乎不会踩雷。你对食物的理解有深度，能发现别人注意不到的好。",weakness:"有时候分析太多，反而少了一些「就是好吃」的纯粹快乐。一个人吃饭，没有人分享感受，会有点遗憾。",food_match:"精品餐厅、有故事的食材、传统工艺料理",vibe:"「这道菜的酱汁层次很有意思，我研究一下。」"}},
+  XSRW:{code:"XSRW",name:"直觉点餐师",emoji:"⚡",color:"#00CEC9",tag:"探索·独享·理性·随性",desc:"不看菜单不看评价，全凭感觉，还总能点对。",detail:{portrait:"你有一种神奇的能力：不做任何功课，走进一家没去过的店，扫一眼菜单，凭直觉点几道菜，结果往往都不错。你相信自己对食物的判断，不需要别人的评价来背书。",strength:"决策速度极快，不会在「吃什么」上浪费时间。你的直觉往往来自长期积累的经验，看似随性，其实有内在逻辑。",weakness:"偶尔直觉失灵，踩雷了会有点懊恼。因为不做攻略，有时候会错过一家店真正的招牌菜。",food_match:"任何类型，随机应变",vibe:"「感觉这道不错，就它了。」"}},
+  CGVP:{code:"CGVP",name:"老店荣誉顾客",emoji:"👑",color:"#FDCB6E",tag:"忠诚·社交·感性·计划",desc:"老板认识你、服务员记得你的位置，这才叫归属感。",detail:{portrait:"你有几家「根据地」餐厅，去了无数次，老板认识你，服务员知道你喜欢坐哪个位置、不吃什么。你喜欢带不同的朋友去这些地方，像是在分享自己的秘密基地。",strength:"你在熟悉的餐厅里有最好的体验——最好的位置、最贴心的服务、偶尔还有老板送的小菜。你的「根据地」是经过时间验证的，不会踩雷。",weakness:"朋友们有时候会觉得「你怎么又带我们去这家」。对新事物的接受度相对较低，可能会错过一些真正好的新店。",food_match:"老字号、家常菜馆、有年头的本帮菜",vibe:"「去我的老地方，老板都认识我了！」"}},
+  CGVW:{code:"CGVW",name:"饭局暖场王",emoji:"🧲",color:"#E17055",tag:"忠诚·社交·感性·随性",desc:"不用做计划，往那一坐，气氛自然就热起来了。",detail:{portrait:"你是饭局的灵魂。不需要去新奇的地方，不需要精心策划，只要你在场，随便一家熟悉的馆子都能吃得热热闹闹。你享受的不是食物本身，而是大家围坐在一起的那种感觉。",strength:"你有极强的社交感染力，能让任何一顿饭都变得有趣。你对「在哪吃」不挑剔，这让你成为最好相处的饭搭子。",weakness:"有时候太注重气氛，对食物本身的要求反而不高，可能会在不太好吃的地方吃得很开心。",food_match:"火锅、烧烤、大排档——一切适合热闹的场合",vibe:"「去哪都行，人齐了就开始！」"}},
+  CGRP:{code:"CGRP",name:"稳健美食官",emoji:"🛡️",color:"#74B9FF",tag:"忠诚·社交·理性·计划",desc:"口碑验证过的才去，把每一顿都吃在刀刃上。",detail:{portrait:"你是朋友圈里最靠谱的订餐人。你不追求新奇，但你推荐的地方几乎从不踩雷。你会提前预约、研究菜单、了解人均，确保每一顿饭都物有所值、宾主尽欢。",strength:"成功率极高，朋友们把吃饭的决定权交给你，从来不会失望。你对性价比有精准的判断，不会花冤枉钱，也不会委屈自己。",weakness:"有时候太保守，错过了一些值得尝试的新店。「没有差评」是你的底线，但这也意味着你很少有意外惊喜。",food_match:"口碑稳定的老店、米其林必比登、本地人推荐",vibe:"「这家我来过十次了，绝对不踩雷。」"}},
+  CGRW:{code:"CGRW",name:"熟悉味道控",emoji:"🗺️",color:"#0984E3",tag:"忠诚·社交·理性·随性",desc:"心里揣着一张老店地图，走到哪都能找到安全感。",detail:{portrait:"你不做攻略，但你心里有一张熟悉餐厅的地图。走到哪个区域，你都能想起附近有哪家靠谱的老店。你不需要计划，因为你的「备选库」已经足够丰富。",strength:"随机应变能力强，不管在哪个城市的哪个角落，你都能找到一家靠谱的地方吃饭。你的选择经过时间验证，不会踩雷。",weakness:"朋友们有时候会觉得你的选择缺乏新鲜感。在陌生城市，你的「熟悉地图」可能会失效，这时候你会有点不知所措。",food_match:"连锁老字号、各地分店、经典菜系",vibe:"「附近有家老店，跟我走。」"}},
+  CSVP:{code:"CSVP",name:"仪式感食客",emoji:"🕯️",color:"#FD79A8",tag:"忠诚·独享·感性·计划",desc:"固定的店、固定的位置、固定的菜，吃的是一种心安。",detail:{portrait:"你有几家特别喜欢的餐厅，偶尔一个人去，坐在最喜欢的位置，点那几道熟悉的菜，慢慢吃，慢慢想事情。这对你来说不是孤独，而是一种珍贵的独处仪式。",strength:"你对自己的喜好非常清晰，不会被外界影响。你的「仪式感」让每一顿饭都有意义，不是简单地填饱肚子，而是一种自我关照。",weakness:"有时候太依赖熟悉的环境，当「根据地」关门或者换了厨师，会有一种失落感。对新事物的尝试意愿较低。",food_match:"有情怀的小馆、固定的家常菜、季节性的老味道",vibe:"「这家是我的秘密基地，一个人来才有感觉。」"}},
+  CSVW:{code:"CSVW",name:"慢食漫游者",emoji:"🌿",color:"#55EFC4",tag:"忠诚·独享·感性·随性",desc:"一个人、一碗面、一段时光，简单就是最好的味道。",detail:{portrait:"你不追求新奇，也不需要热闹。一个人，一家熟悉的小馆，一碗热腾腾的面或者一份家常菜，慢慢吃，慢慢感受。你觉得吃饭是一件很私人的事，不需要仪式，不需要分享，只需要安静。",strength:"你对生活有一种难得的平静感，不会被「必须打卡」「必须尝新」的焦虑裹挟。你知道什么让自己真正满足，这是一种很高级的自我认知。",weakness:"有时候太安于现状，可能会错过很多好东西。朋友们邀请你去新地方，你可能会有点抗拒。",food_match:"家常小馆、面馆、粥铺、街边早餐",vibe:"「还是这家，吃着最踏实。」"}},
+  CSRP:{code:"CSRP",name:"口味完美主义者",emoji:"📐",color:"#636E72",tag:"忠诚·独享·理性·计划",desc:"有自己的标准，宁可多等一会儿，也不将就一顿。",detail:{portrait:"你对吃有一套自己的标准，不高调，但很坚定。你不追求新奇，但你对「好吃」的定义非常精准。你会提前计划，选好经过验证的餐厅，一个人安静地去，认真地吃，不将就。",strength:"你的每一顿饭都是经过筛选的，踩雷率极低。你对食物有深刻的理解，能分辨出真正的好食材和好手艺。",weakness:"标准太高，有时候会因为找不到「完全符合要求」的地方而将就或者干脆不吃。对别人推荐的地方，你可能会有点挑剔。",food_match:"精品食材、传统工艺、有坚持的小馆",vibe:"「我只去我确认好吃的地方，不将就。」"}},
+  CSRW:{code:"CSRW",name:"云淡风轻派",emoji:"☁️",color:"#B2BEC3",tag:"忠诚·独享·理性·随性",desc:"能吃饱就是幸福，不折腾，安安静静最自在。",detail:{portrait:"你对吃这件事没有太多执念。不需要打卡，不需要仪式感，不需要热闹。随便找一家熟悉的店，点几道常吃的菜，一个人安静地吃完，简单、高效、自在。你觉得把时间花在「纠结吃什么」上是一种浪费。",strength:"你是最省心的饭搭子，不挑剔、不纠结、不拖延。你对生活有一种洒脱的态度，不会被「吃什么」这种小事影响心情。",weakness:"有时候太随意，可能会错过很多真正好吃的东西。朋友们想和你一起认真吃一顿，你可能会觉得「没必要这么麻烦」。",food_match:"任何简单、实在、不折腾的食物",vibe:"「能吃饱就行，别搞那么复杂。」"}},
+};
+
+// ── 渲染 ──
+const params=new URLSearchParams(location.search);
+const code=params.get("code")||"XGVP";
+const p=PERSONALITIES[code]||PERSONALITIES["XGVP"];
+
+// 从URL读取原始分数
+const rawScores={
+  X:parseInt(params.get("X")||0),
+  C:parseInt(params.get("C")||0),
+  G:parseInt(params.get("G")||0),
+  S:parseInt(params.get("S")||0),
+  V:parseInt(params.get("V")||0),
+  R:parseInt(params.get("R")||0),
+  P:parseInt(params.get("P")||0),
+  W:parseInt(params.get("W")||0),
+};
+
+// 设置颜色变量
+document.documentElement.style.setProperty("--c",p.color);
+document.querySelectorAll(".result-card,.result-card-bg,.result-card-border,.dim-tag,.detail-block-title .dot,.food-tag,.vibe-block").forEach(el=>{
+  el.style.setProperty("--c",p.color);
+});
+
+const card=document.getElementById("result-card");
+card.style.setProperty("--c",p.color);
+
+document.getElementById("result-code").textContent=p.code;
+document.getElementById("result-code").style.color=p.color;
+document.getElementById("result-emoji").textContent=p.emoji;
+document.getElementById("result-name").textContent=p.name;
+document.getElementById("result-desc").textContent=p.desc;
+
+// 维度标签
+const dimWrap=document.getElementById("dim-tags");
+p.tag.split("·").forEach(t=>{
+  const span=document.createElement("span");
+  span.className="dim-tag";
+  span.style.setProperty("--c",p.color);
+  span.style.color=p.color;
+  span.style.borderColor=p.color;
+  span.textContent=t.trim();
+  dimWrap.appendChild(span);
+});
+
+// 维度百分比进度条
+const dimBarsWrap = document.getElementById("dim-bars");
+const DIM_PAIRS = [
+  { a:"X", aName:"探索", b:"C", bName:"忠诚", color:"#FF9F7F" },
+  { a:"G", aName:"社交", b:"S", bName:"独享", color:"#7FC8FF" },
+  { a:"V", aName:"感性", b:"R", bName:"理性", color:"#B89FFF" },
+  { a:"P", aName:"计划", b:"W", bName:"随性", color:"#6DDBB8" },
+];
+
+// 检查是否有分数数据（直接访问结果页时无分数）
+const hasScores = (rawScores.X+rawScores.C+rawScores.G+rawScores.S+rawScores.V+rawScores.R+rawScores.P+rawScores.W) > 0;
+
+if (hasScores) {
+  const titleEl = document.createElement("div");
+  titleEl.style.cssText = "font-size:11px;font-weight:900;color:#aaa;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:6px;";
+  titleEl.innerHTML = `<span style="width:8px;height:8px;border-radius:2px;background:${p.color};display:inline-block"></span>📊 你的维度分布`;
+  dimBarsWrap.appendChild(titleEl);
+
+  DIM_PAIRS.forEach(dim => {
+    const aVal = rawScores[dim.a] || 0;
+    const bVal = rawScores[dim.b] || 0;
+    const total = aVal + bVal;
+    const aPct = total > 0 ? Math.round(aVal / total * 100) : 50;
+    const bPct = 100 - aPct;
+    // 主导方
+    const dominant = aPct >= bPct ? dim.aName : dim.bName;
+    const dominantPct = Math.max(aPct, bPct);
+
+    const row = document.createElement("div");
+    row.className = "dim-bar-row";
+    row.innerHTML = `
+      <div class="dim-bar-label">
+        ${dominant}
+        <span>${dominantPct}%</span>
+      </div>
+      <div class="dim-bar-track">
+        <div class="dim-bar-fill" style="background:${dim.color}" data-pct="${dominantPct}"></div>
+      </div>
+      <div class="dim-bar-vs">${dim.aName} / ${dim.bName}</div>
+    `;
+    dimBarsWrap.appendChild(row);
+  });
+
+  // 动画：延迟触发进度条填充
+  setTimeout(() => {
+    dimBarsWrap.querySelectorAll(".dim-bar-fill").forEach(el => {
+      el.style.width = el.dataset.pct + "%";
+    });
+  }, 300);
+} else {
+  // 无分数时隐藏
+  dimBarsWrap.style.display = "none";
+}
+
+// 食物图标
+const mascotWrap=document.getElementById("result-mascot");
+mascotWrap.innerHTML=getFoodHTML(code,110);
+let bo=0,bd=1;
+setInterval(()=>{bo+=bd*0.5;if(bo>=5||bo<=0)bd*=-1;mascotWrap.style.transform=`translateY(${bo}px)`;},40);
+
+// 深度解读
+const ds=document.getElementById("detail-section");
+const d=p.detail;
+
+function makeBlock(icon,title,body){
+  const div=document.createElement("div");
+  div.className="detail-block";
+  div.innerHTML=`<div class="detail-block-title"><span class="dot" style="background:${p.color}"></span>${icon} ${title}</div><div class="detail-block-body">${body}</div>`;
+  return div;
+}
+
+ds.appendChild(makeBlock("🪞","你是这样的人",d.portrait));
+ds.appendChild(makeBlock("✨","你的优势",d.strength));
+ds.appendChild(makeBlock("🌱","小小弱点",d.weakness));
+
+// 食物偏好
+const foodBlock=document.createElement("div");
+foodBlock.className="detail-block";
+foodBlock.innerHTML=`<div class="detail-block-title"><span class="dot" style="background:${p.color}"></span>🍽️ 你的食物偏好</div>`;
+const tagWrap=document.createElement("div");
+tagWrap.className="food-tag-wrap";
+d.food_match.split("、").forEach(f=>{
+  const t=document.createElement("span");
+  t.className="food-tag";
+  t.style.background=p.color;
+  t.textContent=f;
+  tagWrap.appendChild(t);
+});
+foodBlock.appendChild(tagWrap);
+ds.appendChild(foodBlock);
+
+// 口头禅
+const vibeBlock=document.createElement("div");
+vibeBlock.className="vibe-block";
+vibeBlock.style.background=p.color;
+vibeBlock.textContent=d.vibe;
+ds.appendChild(vibeBlock);
+
+// 算卦跳转（带上人格码）
+function goFortune(){
+  window.location.href="fortune.html?code="+code;
+}
+</script>
+</body>
+</html>

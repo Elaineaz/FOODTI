@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>答题中 · FOODTI</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    .quiz-header{width:100%;display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
+    .back-btn{font-size:13px;color:#888;text-decoration:none;background:none;border:none;cursor:pointer;}
+    .back-btn:hover{color:#1a1a1a;}
+    .quiz-title{font-family:'Press Start 2P','Courier New',monospace;font-size:12px;color:#1a1a1a;letter-spacing:2px;}
+    .companion{display:flex;justify-content:center;margin-bottom:20px;}
+    .companion svg{transition:transform 0.1s;}
+    .option-btn{display:flex;align-items:flex-start;gap:12px;}
+    .option-letter{flex-shrink:0;width:26px;height:26px;border:2px solid currentColor;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Press Start 2P','Courier New',monospace;margin-top:1px;}
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="quiz-header">
+    <a href="index.html" class="back-btn">← 返回</a>
+    <span class="quiz-title">FOODTI</span>
+    <span style="width:40px"></span>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span id="progress-text">第 1 题</span>
+      <span id="progress-count">1 / 12</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:8.33%"></div></div>
+  </div>
+  <div class="companion" id="companion-wrap"></div>
+  <div class="question-card" id="question-card">
+    <div class="question-num pixel-font" id="question-num">Q.01</div>
+    <div class="question-text" id="question-text"></div>
+    <div class="options-list" id="options-list"></div>
+  </div>
+</div>
+<script>
+// ── 食物图标（马卡龙色系）──
+const FOODS = [
+  { bg:"#FFD6CC", svg:`<circle cx="50" cy="54" r="32" fill="#fff5f3"/><ellipse cx="50" cy="62" rx="32" ry="26" fill="#fff5f3"/><path d="M18 54 Q50 20 82 54 Q82 80 50 82 Q18 80 18 54Z" fill="white"/><path d="M22 56 Q50 26 78 56" fill="none" stroke="#f9c4b8" stroke-width="2"/><ellipse cx="50" cy="46" rx="22" ry="18" fill="#f9c4b8"/><ellipse cx="50" cy="44" rx="14" ry="10" fill="#ffb3a0"/><circle cx="43" cy="42" r="2.5" fill="#e8856e"/><circle cx="57" cy="42" r="2.5" fill="#e8856e"/><ellipse cx="50" cy="48" rx="5" ry="3" fill="#e8856e"/>` },
+  { bg:"#FFF3CC", svg:`<rect x="22" y="52" width="56" height="34" rx="10" fill="#ffe9a0"/><rect x="26" y="56" width="48" height="26" rx="8" fill="#fff8e1"/><path d="M30 62 Q38 56 46 62 Q54 68 62 62 Q70 56 74 62" fill="none" stroke="#f5c842" stroke-width="3" stroke-linecap="round"/><path d="M30 70 Q38 64 46 70 Q54 76 62 70 Q70 64 74 70" fill="none" stroke="#f5c842" stroke-width="3" stroke-linecap="round"/><rect x="36" y="30" width="6" height="26" rx="3" fill="#e8a87c"/><rect x="58" y="30" width="6" height="26" rx="3" fill="#e8a87c"/><ellipse cx="39" cy="30" rx="5" ry="4" fill="#d4845a"/><ellipse cx="61" cy="30" rx="5" ry="4" fill="#d4845a"/>` },
+  { bg:"#FFE0D6", svg:`<path d="M50 18 L82 74 L18 74 Z" fill="#f9c784"/><path d="M50 22 L78 70 L22 70 Z" fill="#f0a050"/><circle cx="42" cy="55" r="6" fill="#e05c5c"/><circle cx="58" cy="52" r="5" fill="#e05c5c"/><circle cx="50" cy="62" r="4" fill="#e05c5c"/><circle cx="38" cy="64" r="3.5" fill="#e05c5c"/><circle cx="62" cy="62" r="3.5" fill="#e05c5c"/><path d="M22 70 L78 70" stroke="#e8a84a" stroke-width="3" stroke-linecap="round"/>` },
+  { bg:"#EDE0FF", svg:`<path d="M34 58 L38 86 L62 86 L66 58 Z" fill="#d4b8f0"/><line x1="40" y1="58" x2="38" y2="86" stroke="#c4a0e8" stroke-width="1"/><line x1="50" y1="58" x2="50" y2="86" stroke="#c4a0e8" stroke-width="1"/><line x1="60" y1="58" x2="62" y2="86" stroke="#c4a0e8" stroke-width="1"/><path d="M32 50 Q38 38 50 36 Q62 38 68 50 Q62 58 50 58 Q38 58 32 50Z" fill="#ffb3d9"/><circle cx="50" cy="36" r="4" fill="#ff8fc8"/><circle cx="50" cy="30" r="3" fill="#ff6eb5"/><circle cx="44" cy="40" r="3" fill="#ffcce8"/><circle cx="56" cy="40" r="3" fill="#ffcce8"/>` },
+  { bg:"#D6F5E8", svg:`<rect x="28" y="38" width="44" height="30" rx="8" fill="#2d2d2d"/><rect x="30" y="40" width="40" height="26" rx="7" fill="#f5f5f0"/><ellipse cx="50" cy="53" rx="16" ry="11" fill="#f9c784"/><ellipse cx="50" cy="53" rx="10" ry="7" fill="#ff8080"/><ellipse cx="50" cy="53" rx="5" ry="3.5" fill="#ffb3b3"/><rect x="28" y="62" width="44" height="8" rx="4" fill="#1a1a1a"/>` },
+  { bg:"#FFF0CC", svg:`<path d="M20 65 Q30 30 50 28 Q70 30 80 65 Q65 75 50 72 Q35 75 20 65Z" fill="#f5c842"/><path d="M25 63 Q35 35 50 33 Q65 35 75 63" fill="none" stroke="#e8a820" stroke-width="2.5" stroke-linecap="round"/><path d="M30 60 Q40 38 50 36 Q60 38 70 60" fill="none" stroke="#e8a820" stroke-width="2" stroke-linecap="round"/><ellipse cx="50" cy="66" rx="28" ry="8" fill="#e8a820"/>` },
+  { bg:"#FFD6E8", svg:`<path d="M42 56 L38 88 L62 88 L58 56 Z" fill="#f9c784"/><line x1="44" y1="56" x2="40" y2="88" stroke="#e8a84a" stroke-width="1"/><line x1="50" y1="56" x2="50" y2="88" stroke="#e8a84a" stroke-width="1"/><line x1="56" y1="56" x2="60" y2="88" stroke="#e8a84a" stroke-width="1"/><circle cx="50" cy="44" r="20" fill="#ffb3d0"/><path d="M36 50 Q42 36 50 34 Q58 36 64 50" fill="#ff8fb8"/><circle cx="44" cy="40" r="3" fill="#ff6eb5" opacity="0.6"/><circle cx="56" cy="38" r="2.5" fill="#ff6eb5" opacity="0.6"/><circle cx="50" cy="28" r="4" fill="#ff4da6"/>` },
+  { bg:"#FFE8CC", svg:`<circle cx="50" cy="58" r="22" fill="#f5a623"/><circle cx="50" cy="58" r="18" fill="#f9c784"/><circle cx="44" cy="52" r="4" fill="#e8850a" opacity="0.5"/><circle cx="57" cy="54" r="3" fill="#e8850a" opacity="0.5"/><circle cx="48" cy="64" r="3.5" fill="#e8850a" opacity="0.5"/><circle cx="50" cy="36" r="4" fill="#f5a623"/><circle cx="38" cy="42" r="4" fill="#f5a623"/><circle cx="62" cy="42" r="4" fill="#f5a623"/><rect x="48" y="22" width="4" height="16" rx="2" fill="#c8a06e"/>` },
+  { bg:"#D8F0D8", svg:`<rect x="18" y="44" width="64" height="42" rx="10" fill="#a8d8a8"/><rect x="20" y="46" width="60" height="38" rx="9" fill="#f5f5f0"/><rect x="20" y="46" width="60" height="18" rx="9" fill="#c8e8c8"/><line x1="50" y1="46" x2="50" y2="84" stroke="#a8d8a8" stroke-width="2"/><circle cx="36" cy="55" r="7" fill="#ff8080"/><circle cx="64" cy="55" r="7" fill="#f9c784"/><ellipse cx="36" cy="73" rx="12" ry="7" fill="#f9c784"/><ellipse cx="64" cy="73" rx="12" ry="7" fill="#a8d8a8"/><rect x="24" y="36" width="52" height="10" rx="5" fill="#8cc88c"/>` },
+  { bg:"#F0E8FF", svg:`<path d="M20 62 Q50 38 80 62 Q80 80 50 80 Q20 80 20 62Z" fill="white"/><path d="M20 62 Q50 38 80 62" fill="none" stroke="#d4b0f0" stroke-width="2.5"/><path d="M26 60 Q32 50 38 56" fill="none" stroke="#d4b0f0" stroke-width="2" stroke-linecap="round"/><path d="M38 56 Q44 48 50 54" fill="none" stroke="#d4b0f0" stroke-width="2" stroke-linecap="round"/><path d="M50 54 Q56 48 62 56" fill="none" stroke="#d4b0f0" stroke-width="2" stroke-linecap="round"/><path d="M62 56 Q68 50 74 60" fill="none" stroke="#d4b0f0" stroke-width="2" stroke-linecap="round"/><ellipse cx="50" cy="62" rx="30" ry="18" fill="#f0e0ff" opacity="0.5"/>` },
+  { bg:"#FFE0F0", svg:`<circle cx="50" cy="54" r="28" fill="#ffb3d0"/><circle cx="50" cy="54" r="12" fill="#fdf6f0"/><circle cx="36" cy="36" r="3" fill="#ff4da6" opacity="0.7"/><circle cx="50" cy="30" r="3" fill="#a8d8ff" opacity="0.8"/><circle cx="64" cy="36" r="3" fill="#f9c784" opacity="0.8"/><circle cx="70" cy="48" r="3" fill="#ff4da6" opacity="0.7"/><circle cx="30" cy="48" r="3" fill="#a8d8ff" opacity="0.8"/><circle cx="42" cy="32" r="2" fill="#f9c784" opacity="0.8"/><circle cx="58" cy="32" r="2" fill="#ff4da6" opacity="0.7"/>` },
+  { bg:"#D8F5E0", svg:`<ellipse cx="50" cy="68" rx="30" ry="14" fill="#c8e8c8"/><ellipse cx="50" cy="66" rx="28" ry="12" fill="#f0f8f0"/><circle cx="38" cy="58" r="10" fill="#90d890"/><circle cx="52" cy="54" r="12" fill="#70c870"/><circle cx="64" cy="58" r="9" fill="#90d890"/><circle cx="44" cy="64" r="8" fill="#a8e0a8"/><circle cx="58" cy="62" r="8" fill="#a8e0a8"/><circle cx="36" cy="62" r="6" fill="#ff8080" opacity="0.8"/><circle cx="62" cy="56" r="5" fill="#ff8080" opacity="0.8"/><circle cx="50" cy="60" r="4" fill="#f9c784" opacity="0.9"/>` },
+  { bg:"#FFE8D0", svg:`<rect x="28" y="50" width="44" height="32" rx="8" fill="#f9c784"/><rect x="30" y="52" width="40" height="28" rx="7" fill="#fff8e8"/><rect x="36" y="28" width="8" height="26" rx="4" fill="#e8a87c"/><rect x="56" y="28" width="8" height="26" rx="4" fill="#e8a87c"/><circle cx="40" cy="66" r="8" fill="#f5a623" opacity="0.8"/><circle cx="60" cy="66" r="8" fill="#e8d0a8"/><rect x="44" y="58" width="12" height="16" rx="4" fill="#ffb3a0"/>` },
+  { bg:"#FFF0CC", svg:`<rect x="22" y="30" width="56" height="56" rx="10" fill="#f5c842"/><rect x="24" y="32" width="52" height="52" rx="9" fill="#f9d878"/><line x1="24" y1="46" x2="76" y2="46" stroke="#e8a820" stroke-width="2"/><line x1="24" y1="58" x2="76" y2="58" stroke="#e8a820" stroke-width="2"/><line x1="24" y1="70" x2="76" y2="70" stroke="#e8a820" stroke-width="2"/><line x1="38" y1="32" x2="38" y2="84" stroke="#e8a820" stroke-width="2"/><line x1="50" y1="32" x2="50" y2="84" stroke="#e8a820" stroke-width="2"/><line x1="62" y1="32" x2="62" y2="84" stroke="#e8a820" stroke-width="2"/><circle cx="50" cy="26" r="5" fill="#ff8080"/>` },
+  { bg:"#FFFACC", svg:`<rect x="30" y="44" width="40" height="42" rx="8" fill="#fff8c0"/><rect x="32" y="46" width="36" height="38" rx="7" fill="#fffde8"/><path d="M32 56 Q50 50 68 56" fill="#fff0a0" stroke="#f5e020" stroke-width="1"/><circle cx="50" cy="52" r="10" fill="#f5e020" opacity="0.6"/><circle cx="50" cy="52" r="6" fill="#f9f060"/><rect x="64" y="52" width="14" height="6" rx="3" fill="#f9c784"/><path d="M30 44 Q50 38 70 44" fill="none" stroke="#f5e020" stroke-width="2"/>` },
+  { bg:"#F0E8FF", svg:`<rect x="46" y="30" width="6" height="52" rx="3" fill="#c8a06e"/><circle cx="49" cy="34" r="14" fill="#ffb3d0"/><circle cx="49" cy="34" r="10" fill="#ffd6e8"/><circle cx="49" cy="54" r="14" fill="#f5f5f0"/><circle cx="49" cy="54" r="10" fill="white"/><circle cx="49" cy="74" r="14" fill="#90d890"/><circle cx="49" cy="74" r="10" fill="#b8e8b8"/>` },
+];
+
+function getFoodSVG(idx, size) {
+  size = size || 90;
+  const f = FOODS[idx % FOODS.length];
+  return `<div style="background:${f.bg};border-radius:50%;width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,0.08)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="${size*0.8}" height="${size*0.8}">${f.svg}</svg></div>`;
+}
+
+// ── 题目数据 ──
+const QUESTIONS=[
+  {id:1,text:"周末到了，你最想怎么吃？",options:[
+    {text:"查小红书找一家最近爆火的新餐厅，必须去打卡",score:{X:1}},
+    {text:"直接去那家开了十年、每次都不会失望的老店",score:{C:1}},
+    {text:"约上一大桌朋友，热热闹闹地吃顿火锅",score:{G:1}},
+    {text:"一个人点一份外卖，窝在沙发上慢慢享用",score:{S:1}},
+  ]},
+  {id:2,text:"朋友让你推荐吃饭的地方，你会怎么做？",options:[
+    {text:"立刻打开收藏夹，翻出精心整理的餐厅清单",score:{P:1}},
+    {text:"说「跟我走就行」，边走边看哪家顺眼进哪家",score:{W:1}},
+    {text:"认真问对方的口味和预算，再做推荐",score:{R:1}},
+    {text:"推荐那家装修超美、拍照出来绝对好看的地方",score:{V:1}},
+  ]},
+  {id:3,text:"点菜的时候，你通常是？",options:[
+    {text:"扫一眼菜单，直接点几个没吃过的新菜试试",score:{X:1}},
+    {text:"老规矩，点那几道每次必点的招牌菜",score:{C:1}},
+    {text:"大家一起讨论，照顾好每个人的口味",score:{G:1}},
+    {text:"自己默默研究菜单，按自己心情点",score:{S:1}},
+  ]},
+  {id:4,text:"一道菜端上来，你第一反应是？",options:[
+    {text:"先拍照！摆盘好不好看、光线够不够",score:{V:1}},
+    {text:"直接夹一筷子，味道才是王道",score:{R:1}},
+    {text:"和朋友分享「这道看起来怎么样」",score:{G:1}},
+    {text:"安静地闻一闻，感受食材的香气",score:{S:1}},
+  ]},
+  {id:5,text:"你对「排队等位」这件事的态度是？",options:[
+    {text:"值得等！好吃的东西等两小时也无所谓",score:{V:1}},
+    {text:"超过30分钟就走，附近随便找家也能吃",score:{W:1}},
+    {text:"提前预约好，绝不让自己和朋友干等",score:{P:1}},
+    {text:"排队正好和朋友聊天，也是一种乐趣",score:{G:1}},
+  ]},
+  {id:6,text:"出去旅游，你怎么解决吃饭问题？",options:[
+    {text:"出发前就做好了三天的餐厅攻略，按计划执行",score:{P:1}},
+    {text:"跟着当地人走，看哪家门口人多就进哪家",score:{W:1}},
+    {text:"专门去找当地最有特色、最小众的苍蝇馆子",score:{X:1}},
+    {text:"找一家大众点评评分最高的，稳妥",score:{C:1}},
+  ]},
+  {id:7,text:"吃饭时你更享受哪种状态？",options:[
+    {text:"大家热烈讨论、互相夹菜、笑声不断",score:{G:1}},
+    {text:"安静地专注于食物本身，细细品味",score:{S:1}},
+    {text:"提前安排好座位和点菜顺序，一切井井有条",score:{P:1}},
+    {text:"随便坐下来，看菜单再临时决定点什么",score:{W:1}},
+  ]},
+  {id:8,text:"你怎么看待「黑暗料理」或奇怪的食物组合？",options:[
+    {text:"超感兴趣！奇怪的东西才值得一试",score:{X:1}},
+    {text:"不太敢，还是经典搭配更让我放心",score:{C:1}},
+    {text:"要看颜值，好看的奇怪食物我愿意尝试",score:{V:1}},
+    {text:"要看评价，有人说好吃我才考虑",score:{R:1}},
+  ]},
+  {id:9,text:"你的外卖收藏夹里是什么样的？",options:[
+    {text:"收藏了几十家，但每次都在纠结点哪家",score:{X:1}},
+    {text:"就固定那三四家，轮流点，熟悉又安心",score:{C:1}},
+    {text:"按心情分了好几个文件夹，分类整理好",score:{P:1}},
+    {text:"基本没收藏，想吃什么临时搜",score:{W:1}},
+  ]},
+  {id:10,text:"朋友说「随便，你定」，你会？",options:[
+    {text:"开心！立刻推荐一家我一直想去的新店",score:{X:1}},
+    {text:"有点压力，还是问问大家有没有特别想吃的",score:{G:1}},
+    {text:"直接定一家口碑稳定的老店，不会出错",score:{C:1}},
+    {text:"打开地图，看看附近有什么，随缘决定",score:{W:1}},
+  ]},
+  {id:11,text:"你觉得一顿饭最重要的是什么？",options:[
+    {text:"氛围和环境，吃的是一种感觉和体验",score:{V:1}},
+    {text:"食材和口味，其他都是次要的",score:{R:1}},
+    {text:"和谁吃，人对了什么都好吃",score:{G:1}},
+    {text:"安静和自在，吃饭是属于自己的时间",score:{S:1}},
+  ]},
+  {id:12,text:"看到一家新开的餐厅，你会？",options:[
+    {text:"马上记下来，下次约人一起去试试",score:{X:1}},
+    {text:"等它开一段时间，看看口碑再说",score:{C:1}},
+    {text:"看看门面装修，颜值高的话考虑进去",score:{V:1}},
+    {text:"先查查人均和菜单，合适再去",score:{R:1}},
+  ]},
+];
+
+function calcPersonality(sc){
+  const X=sc.X||0,C=sc.C||0,G=sc.G||0,S=sc.S||0,V=sc.V||0,R=sc.R||0,P=sc.P||0,W=sc.W||0;
+  return (X>=C?"X":"C")+(G>=S?"G":"S")+(V>=R?"V":"R")+(P>=W?"P":"W");
+}
+
+// ── 答题逻辑 ──
+let current=0;
+const scores={X:0,C:0,G:0,S:0,V:0,R:0,P:0,W:0};
+const LETTERS=["A","B","C","D"];
+const COLORS=["#FF6B6B","#FF9F43","#EE5A24","#F79F1F","#A29BFE","#6C5CE7","#00B894","#00CEC9","#FDCB6E","#E17055","#74B9FF","#0984E3"];
+
+const companionWrap = document.getElementById("companion-wrap");
+let bo=0, bd=1;
+setInterval(()=>{
+  bo+=bd*0.5; if(bo>=4||bo<=0) bd*=-1;
+  companionWrap.style.transform=`translateY(${bo}px)`;
+}, 40);
+
+function renderQuestion(idx){
+  const q=QUESTIONS[idx], total=QUESTIONS.length;
+  document.getElementById("progress-text").textContent="第 "+(idx+1)+" 题";
+  document.getElementById("progress-count").textContent=(idx+1)+" / "+total;
+  document.getElementById("progress-fill").style.width=((idx+1)/total*100).toFixed(1)+"%";
+  document.getElementById("question-num").textContent="Q."+String(idx+1).padStart(2,"0");
+  document.getElementById("question-text").textContent=q.text;
+
+  // 更新食物图标
+  companionWrap.innerHTML = getFoodSVG(idx, 90);
+
+  const list=document.getElementById("options-list");
+  list.innerHTML="";
+  q.options.forEach((opt,i)=>{
+    const btn=document.createElement("button");
+    btn.className="option-btn";
+    btn.innerHTML=`<span class="option-letter">${LETTERS[i]}</span><span>${opt.text}</span>`;
+    btn.addEventListener("click",()=>onSelect(opt.score,btn));
+    list.appendChild(btn);
+  });
+  const card=document.getElementById("question-card");
+  card.style.animation="none"; card.offsetHeight; card.style.animation="";
+}
+
+function onSelect(score,btn){
+  document.querySelectorAll(".option-btn").forEach(b=>b.classList.remove("selected"));
+  btn.classList.add("selected");
+  Object.entries(score).forEach(([k,v])=>{scores[k]=(scores[k]||0)+v;});
+  setTimeout(()=>{
+    current++;
+    if(current<QUESTIONS.length){renderQuestion(current);}
+    else{
+      const code=calcPersonality(scores);
+      const s=scores;
+      const q=`code=${code}&X=${s.X||0}&C=${s.C||0}&G=${s.G||0}&S=${s.S||0}&V=${s.V||0}&R=${s.R||0}&P=${s.P||0}&W=${s.W||0}`;
+      window.location.href="result.html?"+q;
+    }
+  },320);
+}
+
+renderQuestion(0);
+</script>
+</body>
+</html>
